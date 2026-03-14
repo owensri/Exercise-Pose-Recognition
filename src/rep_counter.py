@@ -273,7 +273,7 @@ class RepCounter:
 
             elif is_fully_up:
                 if self.stages[current_action] == 'down':
-                    self.stages[current_action] = None
+                    self.stages[current_action] = 'up'
                     self.counters[current_action] += 1
                     feedback = "เยี่ยมมาก! นับ +1 ฟอร์มเป๊ะสุดๆ"
                     color    = (0, 255, 0)
