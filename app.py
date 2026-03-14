@@ -20,7 +20,7 @@ from preprocessor import Preprocessor
 from smoother import LandmarkSmoother
 from rep_counter import RepCounter
 
-st.set_page_config(page_title="AI Exercise Tracker", page_icon="🏋️‍♂️", layout="wide")
+st.set_page_config(page_title="AI Exercise Tracker", page_icon="🏋️‍♂️", layout="centered")
 
 st.markdown("""
     <style>
@@ -353,11 +353,16 @@ def main():
     st.markdown("---")
 
     # ---- ปุ่มเริ่มวิเคราะห์ (กลางหน้า) ----
-    col_l, col_c, col_r = st.columns([2, 1, 2])
+    col_l, col_c, col_r = st.columns([1, 2, 1])
     with col_c:
-        start_button = st.button("🚀 เริ่มวิเคราะห์", type="primary", use_container_width=True)
-
+        start_button = st.button(
+            "🚀 เริ่มวิเคราะห์",
+            type="primary",
+            use_container_width=True,
+            disabled=uploaded_file is None
+        )
     if uploaded_file is None:
+        st.caption("⬆️ อัปโหลดวิดีโอก่อนเพื่อเริ่มวิเคราะห์")
         return
 
     if not start_button:
@@ -390,9 +395,7 @@ def main():
     window_frames      = deque(maxlen=config.SEQUENCE_LENGTH)
     prediction_buffer  = deque(maxlen=VOTING_WINDOW)
 
-    progress_bar = st.progress(0)
-    status_text  = st.empty()
-    status_text.info("กำลังประมวลผล... กรุณารอจนกว่าแถบสถานะจะเต็ม")
+    progress_bar = st.progress(0, text="กำลังเริ่มต้นประมวลผล...")
 
     tfile = tempfile.NamedTemporaryFile(delete=False)
     tfile.write(uploaded_file.read())
@@ -489,13 +492,12 @@ def main():
 
         if frame_counter % 15 == 0 and total_frames > 0:
             pct = min(frame_counter / total_frames, 1.0)
-            progress_bar.progress(pct)
-            status_text.info(f"กำลังประมวลผล... {int(pct * 100)}%")
+            progress_bar.progress(pct, text=f"กำลังประมวลผล... {int(pct * 100)}%  ({frame_counter}/{total_frames} เฟรม)")
 
     cap.release()
     writer.release()
 
-    status_text.info("กำลังเตรียมวิดีโอผลลัพธ์...")
+    progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
     try:
         subprocess.run(
             ['ffmpeg', '-y', '-i', temp_out_mp4,
@@ -507,14 +509,14 @@ def main():
         final_out_mp4 = temp_out_mp4
 
     progress_bar.empty()
-    status_text.empty()
-    st.success("ประมวลผลเสร็จสมบูรณ์!")
+    st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
 
-    st.markdown("<h2 style='text-align:center;'>วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
     st.video(final_out_mp4)
 
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align:center;'>สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Pushup", counters['pushup'])
     col2.metric("Squat",  counters['squat'])
@@ -532,11 +534,17 @@ def main():
     ).properties(height=350).configure_view(strokeWidth=0)
     st.altair_chart(chart, use_container_width=True, theme="streamlit")
 
-    st.markdown("<h2 style='text-align:center;'>ประสิทธิภาพระบบ</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("<h2 style='text-align:center;'>⚡ ประสิทธิภาพระบบ</h2>", unsafe_allow_html=True)
     total_duration = time.time() - overall_start_time
     c1, c2 = st.columns(2)
     c1.metric("เวลาที่ใช้ทั้งหมด (วินาที)", f"{total_duration:.2f}")
     c2.metric("ความเร็วเฉลี่ย (FPS)",        f"{frame_counter / total_duration:.1f}")
+
+    st.markdown("---")
+    col_l, col_c, col_r = st.columns([1, 2, 1])
+    with col_c:
+        st.button("🔄 วิเคราะห์วิดีโอใหม่", use_container_width=True, on_click=st.rerun)
 
 
 if __name__ == "__main__":
