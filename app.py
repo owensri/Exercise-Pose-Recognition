@@ -278,95 +278,89 @@ def main():
     DEFAULT_MODEL       = "LSTM + CNN (Hybrid)"
     # ================================================================
 
+    # ---- Header ----
     st.markdown("<h1 style='text-align: center;'>🏋️ AI Exercise Tracker</h1>",
                 unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888888;'>"
-                "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p><br>",
+                "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p>",
                 unsafe_allow_html=True)
-    st.info("👉 กด **>>** ที่มุมซ้ายบนเพื่อเปิดเมนูตั้งค่าครับ")
 
-    with st.sidebar:
-        st.header("⚙️ ตั้งค่าก่อนเริ่ม")
+    st.markdown("---")
 
-        # ---- เลือกโมเดล (แสดงเฉพาะเมื่อ SHOW_MODEL_SELECTOR = True) ----
-        model_files = {
-            "1-Layer LSTM":         "exercise_model_lstm_1layer.keras",
-            "2-Layer LSTM":         "exercise_model_lstm_2layer.keras",
-            "LSTM + CNN (Hybrid)":  "exercise_model_hybrid.keras",
-            "CNN":                  "exercise_model_cnn.keras",
-        }
-        if SHOW_MODEL_SELECTOR:
-            model_choice = st.selectbox("เลือกโมเดล AI:", list(model_files.keys()))
-        else:
-            model_choice = DEFAULT_MODEL
+    # ---- Model config (hidden จากผู้ใช้) ----
+    model_files = {
+        "1-Layer LSTM":         "exercise_model_lstm_1layer.keras",
+        "2-Layer LSTM":         "exercise_model_lstm_2layer.keras",
+        "LSTM + CNN (Hybrid)":  "exercise_model_hybrid.keras",
+        "CNN":                  "exercise_model_cnn.keras",
+    }
+    if SHOW_MODEL_SELECTOR:
+        model_choice = st.selectbox("เลือกโมเดล AI:", list(model_files.keys()))
+    else:
+        model_choice = DEFAULT_MODEL
 
-        selected_model_file = model_files[model_choice]
-        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), selected_model_file)
+    selected_model_file = model_files[model_choice]
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), selected_model_file)
 
-        st.markdown("---")
+    # ---- STEP 1: เลือกระดับ ----
+    st.markdown("### 🎯 Step 1 — เลือกระดับของคุณ")
+    st.caption("ระดับจะกำหนดว่าต้องย่อตัวลึกแค่ไหนจึงจะนับ 1 ครั้ง")
 
-        # ---- เลือกระดับผู้ใช้ ----
-        st.markdown("**🎯 เลือกระดับของคุณ**")
-        st.caption("ระดับจะกำหนดว่าต้องย่อตัวลึกแค่ไหนจึงจะนับ 1 ครั้ง")
+    diff_display = st.radio(
+        label="ระดับผู้ใช้งาน",
+        options=["🟢  Beginner", "🔴  Advanced"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    difficulty_level = "beginner" if "Beginner" in diff_display else "advanced"
 
-        diff_display = st.radio(
-            label="ระดับผู้ใช้งาน",
-            options=["🟢  Beginner", "🔴  Advanced"],
-            label_visibility="collapsed"
+    if difficulty_level == "beginner":
+        st.info(
+            "**Beginner** เหมาะสำหรับคนที่เพิ่งเริ่มออกกำลังกาย หรือยังไม่ค่อยยืดหยุ่น — "
+            "ย่อตัวลงครึ่งทางก็นับให้"
         )
-        difficulty_level = "beginner" if "Beginner" in diff_display else "advanced"
-
-        if difficulty_level == "beginner":
-            st.info(
-                "**Beginner** เหมาะสำหรับ\n"
-                "- คนที่เพิ่งเริ่มออกกำลังกาย\n"
-                "- ยังไม่ค่อยยืดหยุ่น\n"
-                "- ย่อตัวลงครึ่งทางก็นับให้"
-            )
-        else:
-            st.warning(
-                "**Advanced** เหมาะสำหรับ\n"
-                "- คนที่ออกกำลังกายสม่ำเสมอ\n"
-                "- ต้องย่อตัวลงลึกมากขึ้น\n"
-                "- เหยียดขึ้นให้สุดจึงจะนับ"
-            )
-
-        st.markdown("---")
-
-        # ---- อัปโหลดวิดีโอ ----
-        st.markdown("**📂 อัปโหลดวิดีโอ**")
-        st.caption("รองรับ .mp4 .mov .avi | แนะนำคลิปไม่เกิน 1-2 นาที | ⚠️ ถ่ายจากมุมด้านข้างลำตัวเท่านั้น")
-        uploaded_file = st.file_uploader(
-            label="อัปโหลดวิดีโอ",
-            type=["mp4", "mov", "avi"],
-            label_visibility="collapsed"
+    else:
+        st.warning(
+            "**Advanced** เหมาะสำหรับคนที่ออกกำลังกายสม่ำเสมอ — "
+            "ต้องย่อตัวลงลึกและเหยียดขึ้นให้สุดจึงจะนับ"
         )
 
-        st.markdown("---")
+    st.markdown("---")
+
+    # ---- STEP 2: อัปโหลดวิดีโอ ----
+    st.markdown("### 📂 Step 2 — อัปโหลดวิดีโอ")
+
+    st.markdown(
+        "💡 **ท่าที่รองรับ:** Pushup, Squat, Lunge &nbsp;|&nbsp; "
+        "รองรับไฟล์ .mp4 .mov .avi &nbsp;|&nbsp; แนะนำคลิปไม่เกิน 1 นาที",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "> ⚠️ **ข้อแนะนำสำคัญ:** ถ่ายวิดีโอจาก**มุมด้านข้างลำตัว**เท่านั้น (ซ้ายหรือขวา) "
+        "ไม่ควรถ่ายจากด้านหน้าหรือด้านหลัง เพราะระบบจะตรวจจับท่าได้ไม่ถูกต้อง "
+        "และให้ร่างกายทั้งตัวอยู่ในกรอบภาพตลอดเวลา"
+    )
+
+    uploaded_file = st.file_uploader(
+        label="อัปโหลดวิดีโอ",
+        type=["mp4", "mov", "avi"],
+        label_visibility="collapsed"
+    )
+
+    if uploaded_file is not None:
+        st.success(f"✅ อัปโหลด '{uploaded_file.name}' สำเร็จ!")
+
+    st.markdown("---")
+
+    # ---- ปุ่มเริ่มวิเคราะห์ (กลางหน้า) ----
+    col_l, col_c, col_r = st.columns([2, 1, 2])
+    with col_c:
         start_button = st.button("🚀 เริ่มวิเคราะห์", type="primary", use_container_width=True)
 
     if uploaded_file is None:
-        st.markdown("""
-        ### วิธีใช้งาน
-        1. เลือกระดับ **Beginner** หรือ **Advanced** ที่เมนูซ้าย
-        2. อัปโหลดวิดีโอท่าออกกำลังกายของคุณ
-        3. กด **เริ่มวิเคราะห์**
-        4. รอให้ระบบประมวลผล แล้วดูผลลัพธ์ได้เลย
-
-        > 💡 ท่าที่รองรับ: **Pushup, Squat, Lunge**
-
-        ---
-        ### 📌 ข้อแนะนำสำหรับวิดีโอ
-        - ถ่ายวิดีโอจาก **มุมด้านข้างลำตัว** เท่านั้น (ด้านข้างซ้ายหรือขวา)
-        - ไม่ควรถ่ายจากด้านหน้าหรือด้านหลัง เพราะระบบจะตรวจจับท่าได้ไม่ถูกต้อง
-        - ให้ร่างกายทั้งตัวอยู่ในกรอบภาพตลอดเวลา
-        - แนะนำคลิปไม่เกิน 1-2 นาที
-        """)
         return
 
     if not start_button:
-        st.success(f"✅ อัปโหลด '{uploaded_file.name}' สำเร็จ! กด 'เริ่มวิเคราะห์' ที่เมนูซ้ายได้เลยครับ")
-        st.video(uploaded_file)
         return
 
     # ==================== Processing ====================
@@ -516,6 +510,10 @@ def main():
     status_text.empty()
     st.success("ประมวลผลเสร็จสมบูรณ์!")
 
+    st.markdown("<h2 style='text-align:center;'>วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
+    st.video(final_out_mp4)
+
+    st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align:center;'>สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Pushup", counters['pushup'])
@@ -539,10 +537,6 @@ def main():
     c1, c2 = st.columns(2)
     c1.metric("เวลาที่ใช้ทั้งหมด (วินาที)", f"{total_duration:.2f}")
     c2.metric("ความเร็วเฉลี่ย (FPS)",        f"{frame_counter / total_duration:.1f}")
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align:center;'>วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-    st.video(final_out_mp4)
 
 
 if __name__ == "__main__":
