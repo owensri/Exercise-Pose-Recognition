@@ -270,47 +270,106 @@ def build_dashboard_bar(canvas, draw, stages, counters,
 
 
 def main():
-    st.markdown("<h1 style='text-align: center;'>AI Exercise Analysis System</h1>",
+    # ================================================================
+    #  DEVELOPER CONFIG — ปรับตรงนี้จุดเดียว
+    #  SHOW_MODEL_SELECTOR = True  → ให้ผู้ใช้เลือกโมเดลเองได้ (สำหรับนักพัฒนา)
+    #  SHOW_MODEL_SELECTOR = False → ใช้ DEFAULT_MODEL อัตโนมัติ (สำหรับผู้ใช้ทั่วไป)
+    SHOW_MODEL_SELECTOR = False
+    DEFAULT_MODEL       = "LSTM + CNN (Hybrid)"
+    # ================================================================
+
+    st.markdown("<h1 style='text-align: center;'>🏋️ AI Exercise Tracker</h1>",
                 unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888888;'>"
-                "ระบบวิเคราะห์ท่าออกกำลังกายและนับจำนวนครั้งอย่างแม่นยำ</p><br>",
+                "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p><br>",
                 unsafe_allow_html=True)
 
     with st.sidebar:
-        st.header("⚙️ การตั้งค่าระบบ")
+        st.header("⚙️ ตั้งค่าก่อนเริ่ม")
 
-        model_choice = st.selectbox("เลือกโมเดล (Model):", [
-            "1-Layer LSTM", "2-Layer LSTM", "LSTM + CNN (Hybrid)", "CNN"
-        ])
+        # ---- เลือกโมเดล (แสดงเฉพาะเมื่อ SHOW_MODEL_SELECTOR = True) ----
         model_files = {
             "1-Layer LSTM":         "exercise_model_lstm_1layer.keras",
             "2-Layer LSTM":         "exercise_model_lstm_2layer.keras",
             "LSTM + CNN (Hybrid)":  "exercise_model_hybrid.keras",
             "CNN":                  "exercise_model_cnn.keras",
         }
+        if SHOW_MODEL_SELECTOR:
+            model_choice = st.selectbox("เลือกโมเดล AI:", list(model_files.keys()))
+        else:
+            model_choice = DEFAULT_MODEL
+
         selected_model_file = model_files[model_choice]
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), selected_model_file)
 
         st.markdown("---")
-        diff_display   = st.selectbox("ความเข้มงวด (Difficulty Level):", ["Beginner", "Advanced"])
+
+        # ---- เลือกระดับผู้ใช้ ----
+        st.markdown("**🎯 เลือกระดับของคุณ**")
+        st.caption("ระดับจะกำหนดว่าต้องย่อตัวลึกแค่ไหนจึงจะนับ 1 ครั้ง")
+
+        diff_display = st.radio(
+            label="ระดับผู้ใช้งาน",
+            options=["🟢  Beginner", "🔴  Advanced"],
+            label_visibility="collapsed"
+        )
         difficulty_level = "beginner" if "Beginner" in diff_display else "advanced"
 
+        if difficulty_level == "beginner":
+            st.info(
+                "**Beginner** เหมาะสำหรับ\n"
+                "- คนที่เพิ่งเริ่มออกกำลังกาย\n"
+                "- ยังไม่ค่อยยืดหยุ่น\n"
+                "- ย่อตัวลงครึ่งทางก็นับให้"
+            )
+        else:
+            st.warning(
+                "**Advanced** เหมาะสำหรับ\n"
+                "- คนที่ออกกำลังกายสม่ำเสมอ\n"
+                "- ต้องย่อตัวลงลึกมากขึ้น\n"
+                "- เหยียดขึ้นให้สุดจึงจะนับ"
+            )
+
         st.markdown("---")
-        uploaded_file = st.file_uploader("อัปโหลดวิดีโอ (Video File)", type=['mp4', 'mov', 'avi'])
+
+        # ---- อัปโหลดวิดีโอ ----
+        st.markdown("**📂 อัปโหลดวิดีโอ**")
+        st.caption("รองรับ .mp4 .mov .avi | แนะนำคลิปไม่เกิน 1-2 นาที | ⚠️ ถ่ายจากมุมด้านข้างลำตัวเท่านั้น")
+        uploaded_file = st.file_uploader(
+            label="อัปโหลดวิดีโอ",
+            type=["mp4", "mov", "avi"],
+            label_visibility="collapsed"
+        )
+
         st.markdown("---")
-        start_button  = st.button("🚀 เริ่มวิเคราะห์ (Start Processing)", type="primary")
+        start_button = st.button("🚀 เริ่มวิเคราะห์", type="primary", use_container_width=True)
 
     if uploaded_file is None:
-        st.info("กรุณาอัปโหลดวิดีโอและตั้งค่าระบบที่เมนูด้านซ้ายเพื่อเริ่มต้น")
+        st.markdown("""
+        ### วิธีใช้งาน
+        1. เลือกระดับ **Beginner** หรือ **Advanced** ที่เมนูซ้าย
+        2. อัปโหลดวิดีโอท่าออกกำลังกายของคุณ
+        3. กด **เริ่มวิเคราะห์**
+        4. รอให้ระบบประมวลผล แล้วดูผลลัพธ์ได้เลย
+
+        > 💡 ท่าที่รองรับ: **Pushup, Squat, Lunge**
+
+        ---
+        ### 📌 ข้อแนะนำสำหรับวิดีโอ
+        - ถ่ายวิดีโอจาก **มุมด้านข้างลำตัว** เท่านั้น (ด้านข้างซ้ายหรือขวา)
+        - ไม่ควรถ่ายจากด้านหน้าหรือด้านหลัง เพราะระบบจะตรวจจับท่าได้ไม่ถูกต้อง
+        - ให้ร่างกายทั้งตัวอยู่ในกรอบภาพตลอดเวลา
+        - แนะนำคลิปไม่เกิน 1-2 นาที
+        """)
         return
 
     if not start_button:
-        st.success(f"อัปโหลดไฟล์ '{uploaded_file.name}' สำเร็จ! กด 'เริ่มวิเคราะห์' ได้เลย")
+        st.success(f"✅ อัปโหลด '{uploaded_file.name}' สำเร็จ! กด 'เริ่มวิเคราะห์' ที่เมนูซ้ายได้เลยครับ")
         st.video(uploaded_file)
         return
 
     # ==================== Processing ====================
-    st.subheader(f"กำลังประมวลผล (ความเข้มงวด: {difficulty_level.capitalize()})")
+    st.subheader(f"กำลังประมวลผล... ระดับ: {'ผู้เริ่มต้น (Beginner)' if difficulty_level == 'beginner' else 'ขั้นสูง (Advanced)'}")
 
     if not os.path.exists(model_path):
         st.error(f"ไม่พบไฟล์โมเดล '{selected_model_file}'")
