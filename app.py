@@ -283,6 +283,7 @@ def main():
     st.markdown("<p style='text-align: center; color: #888888;'>"
                 "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p><br>",
                 unsafe_allow_html=True)
+    st.info("👉 กด **>>** ที่มุมซ้ายบนเพื่อเปิดเมนูตั้งค่าครับ")
 
     with st.sidebar:
         st.header("⚙️ ตั้งค่าก่อนเริ่ม")
