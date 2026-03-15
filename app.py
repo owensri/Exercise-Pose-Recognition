@@ -278,14 +278,7 @@ def main():
 
     # ---- init session state ----
     if "page" not in st.session_state:
-        st.session_state.page = "input"   # "input" | "processing"
-
-    # ---- Header ----
-    st.markdown("<h1 style='text-align: center;'>🏋️ AI Exercise Tracker</h1>",
-                unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #888888;'>"
-                "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p>",
-                unsafe_allow_html=True)
+        st.session_state.page = "input"
 
     # ---- Model config ----
     model_files = {
@@ -307,72 +300,82 @@ def main():
     # ================================================================
     if st.session_state.page == "input":
 
-        st.markdown("---")
+        input_container = st.empty()
 
-        # ---- STEP 1 ----
-        st.markdown("### 🎯 Step 1 — เลือกระดับของคุณ")
-        st.caption("ระดับจะกำหนดว่าต้องย่อตัวลึกแค่ไหนจึงจะนับ 1 ครั้ง")
+        with input_container.container():
+            st.markdown("<h1 style='text-align: center;'>🏋️ AI Exercise Tracker</h1>",
+                        unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #888888;'>"
+                        "อัปโหลดวิดีโอท่าออกกำลังกาย แล้วให้ AI นับครั้งและแนะนำฟอร์มให้คุณ</p>",
+                        unsafe_allow_html=True)
 
-        diff_display = st.radio(
-            label="ระดับผู้ใช้งาน",
-            options=["🟢  Beginner", "🔴  Advanced"],
-            horizontal=True,
-            label_visibility="collapsed"
-        )
+            st.markdown("---")
 
-        if "Beginner" in diff_display:
-            st.info(
-                "**Beginner** เหมาะสำหรับคนที่เพิ่งเริ่มออกกำลังกาย หรือยังไม่ค่อยยืดหยุ่น — "
-                "ย่อตัวลงครึ่งทางก็นับให้"
-            )
-        else:
-            st.warning(
-                "**Advanced** เหมาะสำหรับคนที่ออกกำลังกายสม่ำเสมอ — "
-                "ต้องย่อตัวลงลึกและเหยียดขึ้นให้สุดจึงจะนับ"
+            # ---- STEP 1 ----
+            st.markdown("### 🎯 Step 1 — เลือกระดับของคุณ")
+            st.caption("ระดับจะกำหนดว่าต้องย่อตัวลึกแค่ไหนจึงจะนับ 1 ครั้ง")
+
+            diff_display = st.radio(
+                label="ระดับผู้ใช้งาน",
+                options=["🟢  Beginner", "🔴  Advanced"],
+                horizontal=True,
+                label_visibility="collapsed"
             )
 
-        st.markdown("---")
+            if "Beginner" in diff_display:
+                st.info(
+                    "**Beginner** เหมาะสำหรับคนที่เพิ่งเริ่มออกกำลังกาย หรือยังไม่ค่อยยืดหยุ่น — "
+                    "ย่อตัวลงครึ่งทางก็นับให้"
+                )
+            else:
+                st.warning(
+                    "**Advanced** เหมาะสำหรับคนที่ออกกำลังกายสม่ำเสมอ — "
+                    "ต้องย่อตัวลงลึกและเหยียดขึ้นให้สุดจึงจะนับ"
+                )
 
-        # ---- STEP 2 ----
-        st.markdown("### 📂 Step 2 — อัปโหลดวิดีโอ")
-        st.markdown(
-            "💡 **ท่าที่รองรับ:** Pushup, Squat, Lunge &nbsp;|&nbsp; "
-            "รองรับไฟล์ .mp4 .mov .avi &nbsp;|&nbsp; แนะนำคลิปไม่เกิน 1 นาที",
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            "> ⚠️ **ข้อแนะนำสำคัญ:** ถ่ายวิดีโอจาก**มุมด้านข้างลำตัว**เท่านั้น (ซ้ายหรือขวา) "
-            "ไม่ควรถ่ายจากด้านหน้าหรือด้านหลัง เพราะระบบจะตรวจจับท่าได้ไม่ถูกต้อง "
-            "และให้ร่างกายทั้งตัวอยู่ในกรอบภาพตลอดเวลา"
-        )
+            st.markdown("---")
 
-        uploaded_file = st.file_uploader(
-            label="อัปโหลดวิดีโอ",
-            type=["mp4", "mov", "avi"],
-            label_visibility="collapsed"
-        )
-
-        if uploaded_file is not None:
-            st.success(f"✅ อัปโหลด '{uploaded_file.name}' สำเร็จ!")
-
-        st.markdown("---")
-
-        # ---- ปุ่มเริ่มวิเคราะห์ ----
-        col_l, col_c, col_r = st.columns([1, 2, 1])
-        with col_c:
-            start_button = st.button(
-                "🚀 เริ่มวิเคราะห์",
-                type="primary",
-                use_container_width=True,
-                disabled=uploaded_file is None
+            # ---- STEP 2 ----
+            st.markdown("### 📂 Step 2 — อัปโหลดวิดีโอ")
+            st.markdown(
+                "💡 **ท่าที่รองรับ:** Pushup, Squat, Lunge &nbsp;|&nbsp; "
+                "รองรับไฟล์ .mp4 .mov .avi &nbsp;|&nbsp; แนะนำคลิปไม่เกิน 1 นาที",
+                unsafe_allow_html=True
             )
-        if uploaded_file is None:
-            st.caption("⬆️ อัปโหลดวิดีโอก่อนเพื่อเริ่มวิเคราะห์")
+            st.markdown(
+                "> ⚠️ **ข้อแนะนำสำคัญ:** ถ่ายวิดีโอจาก**มุมด้านข้างลำตัว**เท่านั้น (ซ้ายหรือขวา) "
+                "ไม่ควรถ่ายจากด้านหน้าหรือด้านหลัง เพราะระบบจะตรวจจับท่าได้ไม่ถูกต้อง "
+                "และให้ร่างกายทั้งตัวอยู่ในกรอบภาพตลอดเวลา"
+            )
+
+            uploaded_file = st.file_uploader(
+                label="อัปโหลดวิดีโอ",
+                type=["mp4", "mov", "avi"],
+                label_visibility="collapsed"
+            )
+
+            if uploaded_file is not None:
+                st.success(f"✅ อัปโหลด '{uploaded_file.name}' สำเร็จ!")
+
+            st.markdown("---")
+
+            # ---- ปุ่มเริ่มวิเคราะห์ ----
+            col_l, col_c, col_r = st.columns([1, 2, 1])
+            with col_c:
+                start_button = st.button(
+                    "🚀 เริ่มวิเคราะห์",
+                    type="primary",
+                    use_container_width=True,
+                    disabled=uploaded_file is None
+                )
+            if uploaded_file is None:
+                st.caption("⬆️ อัปโหลดวิดีโอก่อนเพื่อเริ่มวิเคราะห์")
 
         if not start_button or uploaded_file is None:
             return
 
-        # บันทึกค่าแล้วเปลี่ยนหน้า
+        # ซ่อนหน้า input ทันที แล้วเปลี่ยนหน้า
+        input_container.empty()
         st.session_state.difficulty_level = "beginner" if "Beginner" in diff_display else "advanced"
         st.session_state.uploaded_file    = uploaded_file
         st.session_state.page             = "processing"
@@ -381,7 +384,11 @@ def main():
     # ================================================================
     #  PAGE: PROCESSING
     # ================================================================
-    if st.session_state.page == "processing":
+    elif st.session_state.page == "processing":
+
+        st.markdown("<h1 style='text-align: center;'>🏋️ AI Exercise Tracker</h1>",
+                    unsafe_allow_html=True)
+        st.markdown("---")
 
         difficulty_level = st.session_state.difficulty_level
         uploaded_file    = st.session_state.uploaded_file
