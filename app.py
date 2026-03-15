@@ -514,6 +514,18 @@ def main():
 
         cap.release()
         writer.release()
+        pose.close()
+
+        # ---- ล้าง memory ----
+        window_frames.clear()
+        prediction_buffer.clear()
+        del model
+
+        # ---- ลบ temp file ----
+        try:
+            os.remove(tfile.name)
+        except Exception:
+            pass
 
         progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
         try:
@@ -525,6 +537,13 @@ def main():
             )
         except Exception:
             final_out_mp4 = temp_out_mp4
+
+        # ลบ temp video ที่ไม่ใช้แล้ว
+        try:
+            if temp_out_mp4 != final_out_mp4:
+                os.remove(temp_out_mp4)
+        except Exception:
+            pass
 
         progress_bar.empty()
         st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
