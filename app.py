@@ -318,7 +318,7 @@ def main():
 
             diff_display = st.radio(
                 label="ระดับผู้ใช้งาน",
-                optirons=["🟢  Beginner", "🔴  Advanced"],
+                options=["🟢  Beginner", "🔴  Advanced"],
                 horizontal=True,
                 label_visibility="collapsed"
             )
