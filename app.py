@@ -273,7 +273,7 @@ def main():
     # ================================================================
     #  DEVELOPER CONFIG
     SHOW_MODEL_SELECTOR = False
-    DEFAULT_MODEL       = "LSTM + CNN (Hybrid)"
+    DEFAULT_MODEL       = "1D-CNN 1-Layer"
     # ================================================================
 
     # ---- init session state ----
@@ -285,7 +285,8 @@ def main():
         "1-Layer LSTM":         "exercise_model_lstm_1layer.keras",
         "2-Layer LSTM":         "exercise_model_lstm_2layer.keras",
         "LSTM + CNN (Hybrid)":  "exercise_model_hybrid.keras",
-        "CNN":                  "exercise_model_cnn.keras",
+        "1D-CNN 1-Layer":       "exercise_model_cnn_1layer.keras",
+        "1D-CNN 2-Layer":       "exercise_model_cnn_2layer.keras",
     }
     if SHOW_MODEL_SELECTOR:
         model_choice = st.selectbox("เลือกโมเดล AI:", list(model_files.keys()))
@@ -317,7 +318,7 @@ def main():
 
             diff_display = st.radio(
                 label="ระดับผู้ใช้งาน",
-                options=["🟢  Beginner", "🔴  Advanced"],
+                optirons=["🟢  Beginner", "🔴  Advanced"],
                 horizontal=True,
                 label_visibility="collapsed"
             )
@@ -514,18 +515,6 @@ def main():
 
         cap.release()
         writer.release()
-        pose.close()
-
-        # ---- ล้าง memory ----
-        window_frames.clear()
-        prediction_buffer.clear()
-        del model
-
-        # ---- ลบ temp file ----
-        try:
-            os.remove(tfile.name)
-        except Exception:
-            pass
 
         progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
         try:
@@ -537,13 +526,6 @@ def main():
             )
         except Exception:
             final_out_mp4 = temp_out_mp4
-
-        # ลบ temp video ที่ไม่ใช้แล้ว
-        try:
-            if temp_out_mp4 != final_out_mp4:
-                os.remove(temp_out_mp4)
-        except Exception:
-            pass
 
         progress_bar.empty()
         st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
