@@ -221,7 +221,7 @@ def build_dashboard_bar(canvas, draw, stages, counters,
               fill=hi if current_action == 'lunge'  else lo)
 
 def main():
-    SHOW_MODEL_SELECTOR = True
+    SHOW_MODEL_SELECTOR = False
     DEFAULT_MODEL       = "1D-CNN 1-Layer"
 
     if "page" not in st.session_state:
