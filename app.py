@@ -137,9 +137,9 @@ def draw_angle_labels(image_rgb, angle_data, current_action=None):
         p_angle = angle_data['primary']['angle']
         px, py  = int(p_lm.x * w), int(p_lm.y * h)
         cv2.putText(image_rgb, f"{int(p_angle)}", (px + 14, py),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),         4, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),         4, cv2.LINE_AA)
         cv2.putText(image_rgb, f"{int(p_angle)}", (px + 14, py),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, CV_COLOR_PRIMARY,   2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, CV_COLOR_PRIMARY,   2, cv2.LINE_AA)
 
         s_lm    = angle_data['secondary']['landmark']
         s_angle = angle_data['secondary']['angle']
@@ -363,11 +363,11 @@ def main():
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         temp_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        temp_out_mp4 = temp_out_file.name
+        temp_out_mp4  = temp_out_file.name
         temp_out_file.close()
 
         final_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        final_out_mp4 = final_out_file.name
+        final_out_mp4  = final_out_file.name
         final_out_file.close()
 
         writer = cv2.VideoWriter(temp_out_mp4, cv2.VideoWriter_fourcc(*'mp4v'),
@@ -456,6 +456,7 @@ def main():
 
         cap.release()
         writer.release()
+        time.sleep(0.5)
 
         progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
         ffmpeg_success = False
@@ -472,8 +473,10 @@ def main():
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode == 0 and os.path.exists(final_out_mp4) and os.path.getsize(final_out_mp4) > 0:
                 ffmpeg_success = True
-        except Exception:
-            pass
+            else:
+                st.warning(f"⚠️ แปลงวิดีโอไม่สำเร็จ: {res.stderr[-200:] if res.stderr else 'ไม่ทราบสาเหตุ'}")
+        except Exception as e:
+            st.error(f"❌ เรียกใช้ FFmpeg ไม่ได้: {e}")
 
         display_video = final_out_mp4 if ffmpeg_success else temp_out_mp4
 
