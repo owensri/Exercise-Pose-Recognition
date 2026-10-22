@@ -476,7 +476,7 @@ def main():
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-        
+
         with open(display_video, 'rb') as vf:
             video_bytes = vf.read()
         st.video(video_bytes, format="video/mp4")
