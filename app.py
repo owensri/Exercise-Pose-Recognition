@@ -467,7 +467,7 @@ def main():
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-        st.video(final_out_mp4)
+        st.video(open(final_out_mp4, 'rb').read(), format='video/mp4')
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
