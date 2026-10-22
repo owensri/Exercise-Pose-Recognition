@@ -10,6 +10,7 @@ import subprocess
 import urllib.request
 import pandas as pd
 import altair as alt
+import base64
 from collections import deque
 from tensorflow.keras.models import load_model
 from PIL import Image, ImageDraw, ImageFont
@@ -362,8 +363,14 @@ def main():
         fps          = cap.get(cv2.CAP_PROP_FPS) or 30.0
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        temp_out_mp4  = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
-        final_out_mp4 = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
+        temp_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        temp_out_mp4  = temp_out_file.name
+        temp_out_file.close()
+
+        final_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        final_out_mp4  = final_out_file.name
+        final_out_file.close()
+
         writer = cv2.VideoWriter(temp_out_mp4, cv2.VideoWriter_fourcc(*'mp4v'),
                                  fps, (CANVAS_W, CANVAS_H))
 
@@ -450,24 +457,56 @@ def main():
 
         cap.release()
         writer.release()
+        time.sleep(0.5)
 
-        progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
+        progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
+        ffmpeg_success = False
         try:
-            subprocess.run(
-                ['ffmpeg', '-y', '-i', temp_out_mp4,
-                 '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-an', '-movflags', '+faststart',
-                 final_out_mp4],
-                check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
+            cmd = [
+                'ffmpeg', '-y', '-i', temp_out_mp4,
+                '-vcodec', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-movflags', '+faststart',
+                '-preset', 'fast',
+                '-an',
+                final_out_mp4
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode == 0 and os.path.exists(final_out_mp4) and os.path.getsize(final_out_mp4) > 0:
+                ffmpeg_success = True
         except Exception:
-            final_out_mp4 = temp_out_mp4
+            pass
+
+        display_video = final_out_mp4 if ffmpeg_success else temp_out_mp4
 
         progress_bar.empty()
         st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-        st.video(open(final_out_mp4, 'rb').read(), format='video/mp4')
+
+        try:
+            with open(display_video, 'rb') as vf:
+                video_bytes = vf.read()
+            video_b64 = base64.b64encode(video_bytes).decode('utf-8')
+            video_html = f'''
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <video width="100%" height="auto" controls autoplay muted playsinline style="border-radius: 12px; border: 1px solid #333;">
+                    <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+                    เบราว์เซอร์ของคุณไม่รองรับการเล่นวิดีโอ
+                </video>
+            </div>
+            '''
+            st.markdown(video_html, unsafe_allow_html=True)
+            st.download_button(
+                label="📥 ดาวน์โหลดวิดีโอผลลัพธ์ (.mp4)",
+                data=video_bytes,
+                file_name="exercise_result.mp4",
+                mime="video/mp4",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"ไม่สามารถแสดงผลวิดีโอได้: {e}")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
@@ -504,4 +543,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
