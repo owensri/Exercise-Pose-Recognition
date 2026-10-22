@@ -451,23 +451,35 @@ def main():
         cap.release()
         writer.release()
 
-        progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
+                progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
+        ffmpeg_success = False
         try:
-            subprocess.run(
-                ['ffmpeg', '-y', '-i', temp_out_mp4,
-                 '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-an',
-                 final_out_mp4],
-                check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
+            cmd = [
+                'ffmpeg', '-y', '-i', temp_out_mp4,
+                '-vcodec', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-movflags', '+faststart',
+                '-preset', 'fast',
+                '-an',
+                final_out_mp4
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode == 0 and os.path.exists(final_out_mp4) and os.path.getsize(final_out_mp4) > 0:
+                ffmpeg_success = True
         except Exception:
-            final_out_mp4 = temp_out_mp4
+            pass
+
+        display_video = final_out_mp4 if ffmpeg_success else temp_out_mp4
 
         progress_bar.empty()
         st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-        st.video(final_out_mp4)
+        
+        with open(display_video, 'rb') as vf:
+            video_bytes = vf.read()
+        st.video(video_bytes, format="video/mp4")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
