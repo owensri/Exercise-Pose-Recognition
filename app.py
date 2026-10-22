@@ -221,7 +221,7 @@ def build_dashboard_bar(canvas, draw, stages, counters,
               fill=hi if current_action == 'lunge'  else lo)
 
 def main():
-    SHOW_MODEL_SELECTOR = True
+    SHOW_MODEL_SELECTOR = False
     DEFAULT_MODEL       = "1D-CNN 1-Layer"
 
     if "page" not in st.session_state:
@@ -362,14 +362,8 @@ def main():
         fps          = cap.get(cv2.CAP_PROP_FPS) or 30.0
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        temp_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        temp_out_mp4  = temp_out_file.name
-        temp_out_file.close()
-
-        final_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-        final_out_mp4  = final_out_file.name
-        final_out_file.close()
-
+        temp_out_mp4  = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
+        final_out_mp4 = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
         writer = cv2.VideoWriter(temp_out_mp4, cv2.VideoWriter_fourcc(*'mp4v'),
                                  fps, (CANVAS_W, CANVAS_H))
 
@@ -456,42 +450,24 @@ def main():
 
         cap.release()
         writer.release()
-        time.sleep(0.5)
 
-        progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
-        ffmpeg_success = False
+        progress_bar.progress(1.0, text="กำลังเตรียมวิดีโอผลลัพธ์...")
         try:
-            cmd = [
-                'ffmpeg', '-y', '-i', temp_out_mp4,
-                '-vcodec', 'libx264',
-                '-pix_fmt', 'yuv420p',
-                '-movflags', '+faststart',
-                '-preset', 'fast',
-                '-an',
-                final_out_mp4
-            ]
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            if res.returncode == 0 and os.path.exists(final_out_mp4) and os.path.getsize(final_out_mp4) > 0:
-                ffmpeg_success = True
-            else:
-                st.warning(f"⚠️ แปลงวิดีโอไม่สำเร็จ: {res.stderr[-200:] if res.stderr else 'ไม่ทราบสาเหตุ'}")
-        except Exception as e:
-            st.error(f"❌ เรียกใช้ FFmpeg ไม่ได้: {e}")
-
-        display_video = final_out_mp4 if ffmpeg_success else temp_out_mp4
+            subprocess.run(
+                ['ffmpeg', '-y', '-i', temp_out_mp4,
+                 '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-an',
+                 final_out_mp4],
+                check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            final_out_mp4 = temp_out_mp4
 
         progress_bar.empty()
         st.success("✅ ประมวลผลเสร็จสมบูรณ์! เลื่อนลงเพื่อดูผลลัพธ์")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
-
-        try:
-            with open(display_video, 'rb') as vf:
-                video_bytes = vf.read()
-            st.video(video_bytes, format="video/mp4")
-        except Exception as e:
-            st.error(f"ไม่สามารถเล่นวิดีโอได้: {e}")
+        st.video(final_out_mp4)
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
