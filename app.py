@@ -455,7 +455,7 @@ def main():
         try:
             subprocess.run(
                 ['ffmpeg', '-y', '-i', temp_out_mp4,
-                 '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-an',
+                 '-vcodec', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-an', '-movflags', '+faststart',
                  final_out_mp4],
                 check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
