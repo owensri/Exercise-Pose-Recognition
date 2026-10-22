@@ -137,9 +137,9 @@ def draw_angle_labels(image_rgb, angle_data, current_action=None):
         p_angle = angle_data['primary']['angle']
         px, py  = int(p_lm.x * w), int(p_lm.y * h)
         cv2.putText(image_rgb, f"{int(p_angle)}", (px + 14, py),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),         4, cv2.LINE_AA)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),         4, cv2.LINE_AA)
         cv2.putText(image_rgb, f"{int(p_angle)}", (px + 14, py),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, CV_COLOR_PRIMARY,   2, cv2.LINE_AA)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, CV_COLOR_PRIMARY,   2, cv2.LINE_AA)
 
         s_lm    = angle_data['secondary']['landmark']
         s_angle = angle_data['secondary']['angle']
@@ -221,7 +221,7 @@ def build_dashboard_bar(canvas, draw, stages, counters,
               fill=hi if current_action == 'lunge'  else lo)
 
 def main():
-    SHOW_MODEL_SELECTOR = False
+    SHOW_MODEL_SELECTOR = True
     DEFAULT_MODEL       = "1D-CNN 1-Layer"
 
     if "page" not in st.session_state:
@@ -362,8 +362,14 @@ def main():
         fps          = cap.get(cv2.CAP_PROP_FPS) or 30.0
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        temp_out_mp4  = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
-        final_out_mp4 = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4').name
+        temp_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        temp_out_mp4 = temp_out_file.name
+        temp_out_file.close()
+
+        final_out_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        final_out_mp4 = final_out_file.name
+        final_out_file.close()
+
         writer = cv2.VideoWriter(temp_out_mp4, cv2.VideoWriter_fourcc(*'mp4v'),
                                  fps, (CANVAS_W, CANVAS_H))
 
@@ -451,7 +457,7 @@ def main():
         cap.release()
         writer.release()
 
-                progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
+        progress_bar.progress(1.0, text="กำลังประมวลผลไฟล์วิดีโอ...")
         ffmpeg_success = False
         try:
             cmd = [
@@ -477,9 +483,12 @@ def main():
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>🎬 วิดีโอผลลัพธ์</h2>", unsafe_allow_html=True)
 
-        with open(display_video, 'rb') as vf:
-            video_bytes = vf.read()
-        st.video(video_bytes, format="video/mp4")
+        try:
+            with open(display_video, 'rb') as vf:
+                video_bytes = vf.read()
+            st.video(video_bytes, format="video/mp4")
+        except Exception as e:
+            st.error(f"ไม่สามารถเล่นวิดีโอได้: {e}")
 
         st.markdown("---")
         st.markdown("<h2 style='text-align:center;'>📊 สรุปจำนวนครั้ง</h2>", unsafe_allow_html=True)
